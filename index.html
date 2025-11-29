@@ -253,7 +253,12 @@
 
             <!-- RIGHT: RESULTS -->
       <section class="panel panel-results">
-        <h2>Results</h2>
+        <div class="results-header">
+          <h2>Results</h2>
+          <button type="button" id="printBtn" class="btn-secondary btn-print">
+            Print / Save as PDF
+          </button>
+        </div>
 
         <div class="scenario-tabs">
           <button type="button" class="scenario-tab active" data-scenario="base">
@@ -275,6 +280,24 @@
         <div id="resultsKpis" class="results-kpis">
           <p>No calculation yet.</p>
         </div>
+
+        <section class="panel-charts">
+          <h3>Charts (active scenario)</h3>
+          <div class="charts-grid">
+            <div class="chart-card">
+              <h4>Cashflow after tax per year</h4>
+              <canvas id="cashflowChart"></canvas>
+            </div>
+            <div class="chart-card">
+              <h4>Equity position over time</h4>
+              <canvas id="equityChart"></canvas>
+            </div>
+            <div class="chart-card">
+              <h4>Property value vs remaining debt</h4>
+              <canvas id="propDebtChart"></canvas>
+            </div>
+          </div>
+        </section>
 
         <details class="results-raw">
           <summary>Show raw result object (debug)</summary>
