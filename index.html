@@ -251,9 +251,26 @@
         </div>
       </section>
 
-      <!-- RIGHT: RESULTS -->
+            <!-- RIGHT: RESULTS -->
       <section class="panel panel-results">
-        <h2>Results (Base Scenario)</h2>
+        <h2>Results</h2>
+
+        <div class="scenario-tabs">
+          <button type="button" class="scenario-tab active" data-scenario="base">
+            Base
+          </button>
+          <button type="button" class="scenario-tab" data-scenario="opt">
+            Optimistic
+          </button>
+          <button type="button" class="scenario-tab" data-scenario="pes">
+            Pessimistic
+          </button>
+        </div>
+
+        <p class="scenario-caption">
+          Active scenario:
+          <strong id="activeScenarioLabel">Base</strong>
+        </p>
 
         <div id="resultsKpis" class="results-kpis">
           <p>No calculation yet.</p>
