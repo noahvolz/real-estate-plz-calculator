@@ -1,6 +1,6 @@
 // main.js
-// UI: read inputs from the form, run a single scenario, show results,
-// and use socioData (PLZ) to suggest rent, vacancy & rent growth.
+// UI: form -> 3 scenarios (base / optimistic / pessimistic) -> show active scenario
+// + PLZ-based suggestions for rent, vacancy & rent growth.
 
 import { socioData } from "./socioData.js";
 import { simulateScenario } from "./model.js";
@@ -101,6 +101,31 @@ function collectInputsFromForm() {
     afaModel: document.getElementById("afaModel").value,
     buildingLifetimeYears: parseNumber("buildingLifetimeYears", 50),
   };
+}
+
+// ---------- Scenario building ----------
+
+// Take base inputs and derive optimistic / pessimistic variants
+function buildScenarioInputs(baseInputs, variant) {
+  const copy = { ...baseInputs };
+
+  const rent = baseInputs.monthlyRent;
+  const rentGrowth = baseInputs.rentGrowth;
+  const vac = baseInputs.vacancyRate;
+
+  if (variant === "opt") {
+    // Optimistic: slightly higher rent, higher growth, lower vacancy
+    copy.monthlyRent = rent * 1.05; // +5 %
+    copy.rentGrowth = rentGrowth + 0.005; // +0.5 pp
+    copy.vacancyRate = Math.max(0, vac - 0.02); // -2 pp
+  } else if (variant === "pes") {
+    // Pessimistic: slightly lower rent, lower growth, higher vacancy
+    copy.monthlyRent = rent * 0.95; // -5 %
+    copy.rentGrowth = Math.max(0, rentGrowth - 0.005); // -0.5 pp, min 0
+    copy.vacancyRate = vac + 0.02; // +2 pp
+  }
+  // base: unchanged
+  return copy;
 }
 
 // ---------- Socio / PLZ helpers ----------
@@ -270,19 +295,44 @@ function applySocioToInputs() {
   updatePlzSummary();
 }
 
-// ---------- Render results ----------
+// ---------- Scenario state & rendering ----------
 
-function renderResults(result) {
+let scenarioResults = {
+  base: null,
+  opt: null,
+  pes: null,
+};
+let activeScenario = "base";
+
+function renderScenario(key) {
+  const labelEl = document.getElementById("activeScenarioLabel");
   const kpiDiv = document.getElementById("resultsKpis");
   const rawPre = document.getElementById("resultsRaw");
 
-  if (!result || !result.kpis) {
+  const data = scenarioResults[key];
+  if (!data || !data.result || !data.result.kpis) {
+    if (labelEl) labelEl.textContent = "–";
     kpiDiv.innerHTML = "<p>No result.</p>";
     rawPre.textContent = "";
     return;
   }
 
-  const k = result.kpis;
+  activeScenario = key;
+  if (labelEl) {
+    labelEl.textContent =
+      key === "base" ? "Base" : key === "opt" ? "Optimistic" : "Pessimistic";
+  }
+
+  // Highlight active tab
+  const tabs = document.querySelectorAll(".scenario-tab");
+  tabs.forEach((tab) => {
+    tab.classList.toggle(
+      "active",
+      tab.dataset.scenario === activeScenario
+    );
+  });
+
+  const k = data.result.kpis;
 
   kpiDiv.innerHTML = `
     <div class="kpi-row">
@@ -315,7 +365,34 @@ function renderResults(result) {
     </div>
   `;
 
-  rawPre.textContent = JSON.stringify(result, null, 2);
+  rawPre.textContent = JSON.stringify(
+    { scenario: key, inputs: data.inputs, result: data.result },
+    null,
+    2
+  );
+}
+
+function recalcAllScenarios() {
+  const baseInputs = collectInputsFromForm();
+  const baseResult = simulateScenario(baseInputs, null);
+
+  const optInputs = buildScenarioInputs(baseInputs, "opt");
+  const optResult = simulateScenario(optInputs, null);
+
+  const pesInputs = buildScenarioInputs(baseInputs, "pes");
+  const pesResult = simulateScenario(pesInputs, null);
+
+  scenarioResults = {
+    base: { inputs: baseInputs, result: baseResult },
+    opt: { inputs: optInputs, result: optResult },
+    pes: { inputs: pesInputs, result: pesResult },
+  };
+
+  // Make sure activeScenario is valid
+  if (!scenarioResults[activeScenario]) {
+    activeScenario = "base";
+  }
+  renderScenario(activeScenario);
 }
 
 // ---------- Init PLZ select ----------
@@ -342,7 +419,7 @@ function initPlzSelect() {
   });
 }
 
-// ---------- Wire up button ----------
+// ---------- Wire up buttons & tabs ----------
 
 document.addEventListener("DOMContentLoaded", () => {
   initPlzSelect();
@@ -351,11 +428,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("runCalcBtn");
   if (btn) {
     btn.addEventListener("click", () => {
-      const inputs = collectInputsFromForm();
-      console.log("Running simulation with inputs:", inputs);
-      const result = simulateScenario(inputs, null);
-      console.log("Simulation result:", result.kpis);
-      renderResults(result);
+      recalcAllScenarios();
     });
   }
 
@@ -363,15 +436,20 @@ document.addEventListener("DOMContentLoaded", () => {
   if (applySocioBtn) {
     applySocioBtn.addEventListener("click", () => {
       applySocioToInputs();
-      // Optional: recalc immediately
-      const inputs = collectInputsFromForm();
-      const result = simulateScenario(inputs, null);
-      renderResults(result);
+      recalcAllScenarios();
     });
   }
 
+  const tabs = document.querySelectorAll(".scenario-tab");
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const scenarioKey = tab.dataset.scenario;
+      if (!scenarioKey) return;
+      activeScenario = scenarioKey;
+      renderScenario(activeScenario);
+    });
+  });
+
   // Run once on load with default values
-  const initialInputs = collectInputsFromForm();
-  const initialResult = simulateScenario(initialInputs, null);
-  renderResults(initialResult);
+  recalcAllScenarios();
 });
