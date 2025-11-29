@@ -1,5 +1,6 @@
 // main.js
-// Step 1 UI: read inputs from the form, run a single scenario, show results.
+// UI: read inputs from the form, run a single scenario, show results,
+// and use socioData (PLZ) to suggest rent, vacancy & rent growth.
 
 import { socioData } from "./socioData.js";
 import { simulateScenario } from "./model.js";
@@ -102,6 +103,173 @@ function collectInputsFromForm() {
   };
 }
 
+// ---------- Socio / PLZ helpers ----------
+
+function getSelectedPlzRecord() {
+  const select = document.getElementById("plzSelect");
+  if (!select) return null;
+  const value = select.value;
+  if (!value) return null;
+  return socioData.find((r) => r.plz === value) || null;
+}
+
+function buildSocioSuggestions() {
+  const rec = getSelectedPlzRecord();
+  if (!rec) return null;
+
+  const sqm = parseNumber("sqm", 0);
+  const buildingValue = parseNumber("buildingValue", 0);
+  const landValue = parseNumber("landValue", 0);
+  const totalPrice = buildingValue + landValue;
+
+  const {
+    population,
+    population_growth_pct,
+    median_net_income_eur,
+    unemployment_rate_pct,
+    avg_rent_eur_m2,
+    new_construction_units_per_1000_residents,
+    vacancy_rate_pct,
+    avg_purchase_price_eur_m2,
+  } = rec;
+
+  const suggestedMonthlyRent =
+    sqm > 0 ? avg_rent_eur_m2 * sqm : null;
+
+  // Base rent growth 1 % p.a., adjust with simple heuristics
+  let rentGrowth = 0.01;
+
+  if (population_growth_pct > 1.5) rentGrowth += 0.005;
+  else if (population_growth_pct < 0) rentGrowth -= 0.003;
+
+  if (vacancy_rate_pct < 2) rentGrowth += 0.003;
+  if (new_construction_units_per_1000_residents > 5) rentGrowth -= 0.003;
+
+  if (rentGrowth < 0) rentGrowth = 0;
+
+  const suggestedVacancyRate = vacancy_rate_pct / 100;
+
+  const benchmarkPricePerM2 = avg_purchase_price_eur_m2;
+  const benchmarkTotalPrice =
+    sqm > 0 ? benchmarkPricePerM2 * sqm : null;
+
+  let priceComment = "";
+  let priceBadge = "neutral";
+
+  if (benchmarkTotalPrice && totalPrice > 0) {
+    const diff = totalPrice - benchmarkTotalPrice;
+    const diffPct = diff / benchmarkTotalPrice;
+
+    if (diffPct < -0.1) {
+      priceComment = "Below benchmark price level.";
+      priceBadge = "good";
+    } else if (Math.abs(diffPct) <= 0.1) {
+      priceComment = "Around benchmark price level.";
+      priceBadge = "neutral";
+    } else {
+      priceComment = "Above benchmark price level.";
+      priceBadge = "bad";
+    }
+  }
+
+  return {
+    rec,
+    sqm,
+    totalPrice,
+    suggestedMonthlyRent,
+    suggestedVacancyRate,
+    rentGrowth,
+    benchmarkPricePerM2,
+    benchmarkTotalPrice,
+    priceComment,
+    priceBadge,
+  };
+}
+
+function updatePlzSummary() {
+  const container = document.getElementById("plzSummary");
+  if (!container) return;
+
+  const s = buildSocioSuggestions();
+  if (!s) {
+    container.innerHTML = "<em>No PLZ selected yet.</em>";
+    return;
+  }
+
+  const r = s.rec;
+
+  const badgeClass =
+    s.priceBadge === "good"
+      ? "badge badge-good"
+      : s.priceBadge === "bad"
+      ? "badge badge-bad"
+      : "badge badge-neutral";
+
+  container.innerHTML = `
+    <p><span class="highlight">PLZ ${r.plz}</span> – year ${r.year}</p>
+    <p>Population: ${r.population.toLocaleString("de-DE")} (growth: ${r.population_growth_pct.toFixed(
+      2
+    )} % p.a.)</p>
+    <p>Median net income: ${formatCurrency(
+      r.median_net_income_eur
+    )} &nbsp; Unemployment: ${r.unemployment_rate_pct.toFixed(1)} %</p>
+    <p>Avg. rent: ${r.avg_rent_eur_m2.toFixed(
+      2
+    )} €/m² &nbsp; New construction: ${r.new_construction_units_per_1000_residents.toFixed(
+    1
+  )} / 1,000 residents</p>
+    <p>Vacancy rate: ${r.vacancy_rate_pct.toFixed(1)} %</p>
+    ${
+      s.benchmarkTotalPrice
+        ? `<p>Benchmark purchase price: <span class="highlight">${formatCurrency(
+            s.benchmarkPricePerM2
+          )}/m² → ${formatCurrency(
+            s.benchmarkTotalPrice
+          )} total</span></p>
+           ${
+             s.totalPrice
+               ? `<p>Your current price: ${formatCurrency(
+                   s.totalPrice
+                 )} <span class="${badgeClass}">${s.priceComment}</span></p>`
+               : ""
+           }`
+        : ""
+    }
+    ${
+      s.suggestedMonthlyRent
+        ? `<p>Suggested monthly rent (cold): <span class="highlight">${formatCurrency(
+            s.suggestedMonthlyRent
+          )}</span></p>`
+        : ""
+    }
+    <p style="margin-top:4px;color:#6b7280;font-size:0.8rem;">
+      Use the button above to apply suggested rent, vacancy & rent growth to your inputs.
+    </p>
+  `;
+}
+
+function applySocioToInputs() {
+  const s = buildSocioSuggestions();
+  if (!s) return;
+
+  if (s.suggestedMonthlyRent != null) {
+    const rentField = document.getElementById("monthlyRent");
+    rentField.value = Math.round(s.suggestedMonthlyRent);
+  }
+
+  if (s.suggestedVacancyRate != null) {
+    const vacField = document.getElementById("vacancyRatePct");
+    vacField.value = (s.suggestedVacancyRate * 100).toFixed(1);
+  }
+
+  if (s.rentGrowth != null) {
+    const growthField = document.getElementById("rentGrowthPct");
+    growthField.value = (s.rentGrowth * 100).toFixed(2);
+  }
+
+  updatePlzSummary();
+}
+
 // ---------- Render results ----------
 
 function renderResults(result) {
@@ -150,19 +318,57 @@ function renderResults(result) {
   rawPre.textContent = JSON.stringify(result, null, 2);
 }
 
+// ---------- Init PLZ select ----------
+
+function initPlzSelect() {
+  const select = document.getElementById("plzSelect");
+  if (!select) return;
+
+  const sorted = [...socioData].sort((a, b) =>
+    a.plz.localeCompare(b.plz)
+  );
+
+  for (const rec of sorted) {
+    const opt = document.createElement("option");
+    opt.value = rec.plz;
+    opt.textContent = `${rec.plz} – population ${rec.population.toLocaleString(
+      "de-DE"
+    )}`;
+    select.appendChild(opt);
+  }
+
+  select.addEventListener("change", () => {
+    updatePlzSummary();
+  });
+}
+
 // ---------- Wire up button ----------
 
 document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("runCalcBtn");
-  if (!btn) return;
+  initPlzSelect();
+  updatePlzSummary();
 
-  btn.addEventListener("click", () => {
-    const inputs = collectInputsFromForm();
-    console.log("Running simulation with inputs:", inputs);
-    const result = simulateScenario(inputs, null);
-    console.log("Simulation result:", result.kpis);
-    renderResults(result);
-  });
+  const btn = document.getElementById("runCalcBtn");
+  if (btn) {
+    btn.addEventListener("click", () => {
+      const inputs = collectInputsFromForm();
+      console.log("Running simulation with inputs:", inputs);
+      const result = simulateScenario(inputs, null);
+      console.log("Simulation result:", result.kpis);
+      renderResults(result);
+    });
+  }
+
+  const applySocioBtn = document.getElementById("applySocioBtn");
+  if (applySocioBtn) {
+    applySocioBtn.addEventListener("click", () => {
+      applySocioToInputs();
+      // Optional: recalc immediately
+      const inputs = collectInputsFromForm();
+      const result = simulateScenario(inputs, null);
+      renderResults(result);
+    });
+  }
 
   // Run once on load with default values
   const initialInputs = collectInputsFromForm();
