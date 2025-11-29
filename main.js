@@ -1,6 +1,8 @@
 // main.js
 // UI: form -> 3 scenarios (base / optimistic / pessimistic) -> show active scenario
-// + PLZ-based suggestions for rent, vacancy & rent growth.
+// + PLZ-based suggestions for rent, vacancy & rent growth
+// + Charts for the active scenario
+// + Print button.
 
 import { socioData } from "./socioData.js";
 import { simulateScenario } from "./model.js";
@@ -105,7 +107,6 @@ function collectInputsFromForm() {
 
 // ---------- Scenario building ----------
 
-// Take base inputs and derive optimistic / pessimistic variants
 function buildScenarioInputs(baseInputs, variant) {
   const copy = { ...baseInputs };
 
@@ -114,17 +115,14 @@ function buildScenarioInputs(baseInputs, variant) {
   const vac = baseInputs.vacancyRate;
 
   if (variant === "opt") {
-    // Optimistic: slightly higher rent, higher growth, lower vacancy
     copy.monthlyRent = rent * 1.05; // +5 %
     copy.rentGrowth = rentGrowth + 0.005; // +0.5 pp
     copy.vacancyRate = Math.max(0, vac - 0.02); // -2 pp
   } else if (variant === "pes") {
-    // Pessimistic: slightly lower rent, lower growth, higher vacancy
     copy.monthlyRent = rent * 0.95; // -5 %
-    copy.rentGrowth = Math.max(0, rentGrowth - 0.005); // -0.5 pp, min 0
+    copy.rentGrowth = Math.max(0, rentGrowth - 0.005); // -0.5 pp
     copy.vacancyRate = vac + 0.02; // +2 pp
   }
-  // base: unchanged
   return copy;
 }
 
@@ -304,6 +302,11 @@ let scenarioResults = {
 };
 let activeScenario = "base";
 
+// Chart instances (global Chart object from CDN)
+let cashflowChart = null;
+let equityChart = null;
+let propDebtChart = null;
+
 function renderScenario(key) {
   const labelEl = document.getElementById("activeScenarioLabel");
   const kpiDiv = document.getElementById("resultsKpis");
@@ -314,6 +317,7 @@ function renderScenario(key) {
     if (labelEl) labelEl.textContent = "–";
     kpiDiv.innerHTML = "<p>No result.</p>";
     rawPre.textContent = "";
+    updateCharts(null);
     return;
   }
 
@@ -370,6 +374,8 @@ function renderScenario(key) {
     null,
     2
   );
+
+  updateCharts(data.result);
 }
 
 function recalcAllScenarios() {
@@ -388,11 +394,137 @@ function recalcAllScenarios() {
     pes: { inputs: pesInputs, result: pesResult },
   };
 
-  // Make sure activeScenario is valid
   if (!scenarioResults[activeScenario]) {
     activeScenario = "base";
   }
   renderScenario(activeScenario);
+}
+
+// ---------- Charts ----------
+
+function updateCharts(result) {
+  const cashCtx = document.getElementById("cashflowChart")?.getContext("2d");
+  const equityCtx = document.getElementById("equityChart")?.getContext("2d");
+  const propDebtCtx = document.getElementById("propDebtChart")?.getContext("2d");
+
+  if (!cashCtx || !equityCtx || !propDebtCtx || !window.Chart) {
+    return;
+  }
+
+  // Destroy old charts
+  if (cashflowChart) cashflowChart.destroy();
+  if (equityChart) equityChart.destroy();
+  if (propDebtChart) propDebtChart.destroy();
+
+  if (!result || !result.years || result.years.length === 0) {
+    cashflowChart = equityChart = propDebtChart = null;
+    return;
+  }
+
+  const years = result.years;
+  const labels = years.map((y) => y.calendarYear);
+  const cashflow = years.map((y) => y.cashAfterTax);
+  const equityPos = years.map((y) => y.equityPosition);
+  const propVal = years.map((y) => y.propertyValue);
+  const debt = years.map((y) => y.remainingDebt);
+
+  cashflowChart = new Chart(cashCtx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Cashflow after tax (€)",
+          data: cashflow,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) =>
+              formatCurrency(ctx.parsed.y ?? 0),
+          },
+        },
+      },
+      scales: {
+        x: { title: { display: true, text: "Year" } },
+        y: {
+          title: { display: true, text: "Cashflow after tax (€)" },
+        },
+      },
+    },
+  });
+
+  equityChart = new Chart(equityCtx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Equity position (€)",
+          data: equityPos,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) =>
+              formatCurrency(ctx.parsed.y ?? 0),
+          },
+        },
+      },
+      scales: {
+        x: { title: { display: true, text: "Year" } },
+        y: {
+          title: { display: true, text: "Equity position (€)" },
+        },
+      },
+    },
+  });
+
+  propDebtChart = new Chart(propDebtCtx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Property value (€)",
+          data: propVal,
+        },
+        {
+          label: "Remaining debt (€)",
+          data: debt,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: (ctx) =>
+              `${ctx.dataset.label}: ${formatCurrency(
+                ctx.parsed.y ?? 0
+              )}`,
+          },
+        },
+      },
+      scales: {
+        x: { title: { display: true, text: "Year" } },
+        y: {
+          title: { display: true, text: "€" },
+        },
+      },
+    },
+  });
 }
 
 // ---------- Init PLZ select ----------
@@ -449,6 +581,13 @@ document.addEventListener("DOMContentLoaded", () => {
       renderScenario(activeScenario);
     });
   });
+
+  const printBtn = document.getElementById("printBtn");
+  if (printBtn) {
+    printBtn.addEventListener("click", () => {
+      window.print();
+    });
+  }
 
   // Run once on load with default values
   recalcAllScenarios();
