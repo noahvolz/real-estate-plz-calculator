@@ -1,15 +1,116 @@
-/* Basic placeholder styles – we'll replace these later */
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  margin: 20px;
-  background: #f5f5f5;
-  color: #111827;
-}
+// socioData.js
+// Socio-economic data per PLZ (latest year = 2024).
+// Source: your socio_data_2024_updated.csv (cleaned & converted).
 
-h1 {
-  margin-bottom: 0.5rem;
-}
+export const socioData = [
+  {
+    plz: "10115",
+    year: 2024,
+    population: 3897145,
+    population_growth_pct: 0.5,
+    median_net_income_eur: 23952.0,
+    unemployment_rate_pct: 9.3,
+    avg_rent_eur_m2: 19.23,
+    new_construction_units_per_1000_residents: 4.0,
+    vacancy_rate_pct: 0.3,
+    avg_purchase_price_eur_m2: 5642.0,
+  },
+  {
+    plz: "20095",
+    year: 2024,
+    population: 1862565,
+    population_growth_pct: 0.6,
+    median_net_income_eur: 26158.1,
+    unemployment_rate_pct: 7.6,
+    avg_rent_eur_m2: 16.62,
+    new_construction_units_per_1000_residents: 4.2,
+    vacancy_rate_pct: 0.5,
+    avg_purchase_price_eur_m2: 5521.0,
+  },
+  {
+    plz: "80331",
+    year: 2024,
+    population: 1603776,
+    population_growth_pct: 0.93,
+    median_net_income_eur: 34036.0,
+    unemployment_rate_pct: 4.8,
+    avg_rent_eur_m2: 23.33,
+    new_construction_units_per_1000_residents: 4.1,
+    vacancy_rate_pct: 0.2,
+    avg_purchase_price_eur_m2: 8611.0,
+  },
+  {
+    plz: "50667",
+    year: 2024,
+    population: 1090473,
+    population_growth_pct: 0.14,
+    median_net_income_eur: 24512.7,
+    unemployment_rate_pct: 8.7,
+    avg_rent_eur_m2: 15.49,
+    new_construction_units_per_1000_residents: 1.6,
+    vacancy_rate_pct: 0.9,
+    avg_purchase_price_eur_m2: 4936.0,
+  },
+  {
+    plz: "60311",
+    year: 2024,
+    population: 776843,
+    population_growth_pct: 0.9,
+    median_net_income_eur: 25271.3,
+    unemployment_rate_pct: 6.0,
+    avg_rent_eur_m2: 18.33,
+    new_construction_units_per_1000_residents: 5.5,
+    vacancy_rate_pct: 0.3,
+    avg_purchase_price_eur_m2: 6391.0,
+  },
+  {
+    plz: "70173",
+    year: 2024,
+    population: 632000,
+    population_growth_pct: -0.12,
+    median_net_income_eur: 26888.0,
+    unemployment_rate_pct: 5.8,
+    avg_rent_eur_m2: 16.5,
+    new_construction_units_per_1000_residents: 2.2,
+    vacancy_rate_pct: 0.5,
+    avg_purchase_price_eur_m2: 4574.0,
+  },
+  {
+    plz: "04109", // padded from 4109 to 04109
+    year: 2024,
+    population: 632562,
+    population_growth_pct: 0.61,
+    median_net_income_eur: 23549.3,
+    unemployment_rate_pct: 5.5,
+    avg_rent_eur_m2: 10.45,
+    new_construction_units_per_1000_residents: 4.1,
+    vacancy_rate_pct: 2.0,
+    avg_purchase_price_eur_m2: 3008.0,
+  },
+  {
+    plz: "68159",
+    year: 2024,
+    population: 318035,
+    population_growth_pct: 1.38,
+    median_net_income_eur: 22997.0,
+    unemployment_rate_pct: 7.2,
+    avg_rent_eur_m2: 9.19,
+    new_construction_units_per_1000_residents: 6.9,
+    vacancy_rate_pct: 1.1,
+    avg_purchase_price_eur_m2: 3496.0,
+  },
+  {
+    plz: "76133",
+    year: 2024,
+    population: 306502,
+    population_growth_pct: -0.41,
+    median_net_income_eur: 23832.0,
+    unemployment_rate_pct: 4.6,
+    avg_rent_eur_m2: 13.35,
+    new_construction_units_per_1000_residents: 1.4,
+    vacancy_rate_pct: 0.7,
+    avg_purchase_price_eur_m2: 3647.0,
+  },
+];
 
-p {
-  color: #4b5563;
-}
+//added sociodata for 2024
