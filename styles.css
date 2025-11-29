@@ -270,3 +270,94 @@ select:focus {
   font-size: 0.8rem;
   color: var(--text-muted);
 }
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.btn-print {
+  font-size: 0.8rem;
+  padding: 4px 10px;
+}
+
+/* Charts */
+.panel-charts {
+  margin-top: 10px;
+}
+
+.panel-charts h3 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
+.chart-card {
+  background: #f9fafb;
+  border-radius: 10px;
+  border: 1px solid var(--border-soft);
+  padding: 8px 10px;
+}
+
+.chart-card h4 {
+  margin: 0 0 4px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.chart-card canvas {
+  width: 100%;
+  max-height: 220px;
+}
+
+/* 2-column charts on larger screens */
+@media (min-width: 1100px) {
+  .charts-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .chart-card:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Print layout: hide inputs, location panel, debug, buttons */
+@media print {
+  body {
+    background: #ffffff;
+  }
+
+  .app {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  .panel {
+    box-shadow: none;
+  }
+
+  .panel-inputs,
+  .panel-location,
+  .btn-primary,
+  .btn-secondary:not(.btn-print),
+  .results-raw {
+    display: none !important;
+  }
+
+  .panel-results {
+    border: none;
+  }
+
+  .scenario-tabs {
+    display: none;
+  }
+
+  .scenario-caption {
+    margin-top: 0;
+  }
+}
