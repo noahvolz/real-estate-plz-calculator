@@ -240,3 +240,33 @@ select:focus {
   background: #fee2e2;
   color: #b91c1c;
 }
+
+/* Scenario tabs */
+.scenario-tabs {
+  display: inline-flex;
+  border-radius: 999px;
+  background: #f3f4f6;
+  padding: 2px;
+  margin-bottom: 6px;
+}
+
+.scenario-tab {
+  border: none;
+  background: transparent;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: #4b5563;
+}
+
+.scenario-tab.active {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.scenario-caption {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
