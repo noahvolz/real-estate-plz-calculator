@@ -157,7 +157,6 @@ export function simulateScenario(inputs = {}, socioContext = null) {
 
   // --- 3.3 Loan schedule for loan 1 + loan 2 ------------------
 
-  // We simulate directly inside the main loop, but we need annuity for loan 1
   const r1 = interestRate1 || 0;
   const r2 = interestRate2 || 0;
   const n1 = loanTermYears1 || 0;
@@ -333,9 +332,6 @@ export function simulateScenario(inputs = {}, socioContext = null) {
       wealthFromCFAndLoan,
       equityPosition,
     });
-
-    // If sold and we don't care about years after sale for charts, we COULD break here.
-    // For now we keep going until horizonYears so we always have a full time axis.
   }
 
   const last = years[years.length - 1];
@@ -395,4 +391,3 @@ export function simulateScenario(inputs = {}, socioContext = null) {
     },
   };
 }
-//add financial model
