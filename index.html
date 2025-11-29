@@ -7,8 +7,245 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <h1>German Real Estate PLZ Calculator</h1>
-  <p>If you see this text in the browser, the basic setup works.</p>
+  <div class="app">
+    <header class="app-header">
+      <h1>German Real Estate Investment Calculator</h1>
+      <p class="subtitle">
+        Step 1: basic calculator (no charts yet). Enter your values and click "Run calculation".
+      </p>
+    </header>
+
+    <main class="app-main">
+      <!-- LEFT: INPUT FORM -->
+      <section class="panel panel-inputs">
+        <h2>Inputs</h2>
+
+        <form id="inputForm">
+          <!-- Property & purchase -->
+          <fieldset>
+            <legend>Property & Purchase</legend>
+
+            <label>
+              Building value (€)
+              <input type="number" id="buildingValue" value="200000" step="1000" />
+            </label>
+
+            <label>
+              Land value (€)
+              <input type="number" id="landValue" value="80000" step="1000" />
+            </label>
+
+            <label>
+              Grunderwerbsteuer (% of price)
+              <input type="number" id="grEStRatePct" value="5" step="0.1" />
+            </label>
+
+            <label>
+              Agent fee / Makler (% of price)
+              <input type="number" id="maklerRatePct" value="3" step="0.1" />
+            </label>
+
+            <label>
+              Land register / Grundbuch (% of price)
+              <input type="number" id="grundbuchRatePct" value="0.5" step="0.1" />
+            </label>
+
+            <label>
+              Notary (% of price)
+              <input type="number" id="notaryRatePct" value="1.5" step="0.1" />
+            </label>
+
+            <label>
+              Company setup cost (€)
+              <input type="number" id="companyCost" value="0" step="1000" />
+            </label>
+
+            <label>
+              Fitting up / Ausbau (€)
+              <input type="number" id="fittingUp" value="30000" step="1000" />
+            </label>
+
+            <label>
+              Initial repairs (€)
+              <input type="number" id="initialRepairs" value="5000" step="1000" />
+            </label>
+          </fieldset>
+
+          <!-- Value development -->
+          <fieldset>
+            <legend>Value Development</legend>
+
+            <label>
+              Building value loss (% p.a.)
+              <input type="number" id="buildingLossRatePct" value="1" step="0.1" />
+            </label>
+
+            <label>
+              Land value growth (% p.a.)
+              <input type="number" id="landGrowthRatePct" value="0.5" step="0.1" />
+            </label>
+
+            <label>
+              Construction cost inflation (% p.a.)
+              <input type="number" id="constructionCostGrowthPct" value="1.5" step="0.1" />
+            </label>
+          </fieldset>
+
+          <!-- Rent & maintenance -->
+          <fieldset>
+            <legend>Rent & Maintenance</legend>
+
+            <label>
+              Size (m²)
+              <input type="number" id="sqm" value="80" step="1" />
+            </label>
+
+            <label>
+              Monthly rent (base, € cold)
+              <input type="number" id="monthlyRent" value="1200" step="50" />
+            </label>
+
+            <label>
+              Vacancy / Mietausfall (% of year)
+              <input type="number" id="vacancyRatePct" value="5" step="0.5" />
+            </label>
+
+            <label>
+              Rent growth (% p.a.)
+              <input type="number" id="rentGrowthPct" value="1" step="0.1" />
+            </label>
+
+            <label>
+              Annual maintenance & operating (€ in year 1)
+              <input type="number" id="annualMaintenance" value="3000" step="100" />
+            </label>
+
+            <label>
+              Maintenance cost growth (% p.a.)
+              <input type="number" id="maintenanceGrowthPct" value="1.25" step="0.1" />
+            </label>
+          </fieldset>
+
+          <!-- Financing -->
+          <fieldset>
+            <legend>Financing</legend>
+
+            <label>
+              Equity (€)
+              <input type="number" id="equity" value="80000" step="1000" />
+            </label>
+
+            <label>
+              Loan 1 term (years)
+              <input type="number" id="loanTermYears1" value="30" step="1" />
+            </label>
+
+            <label>
+              Fixed interest period (years)
+              <input type="number" id="fixRateYears1" value="20" step="1" />
+            </label>
+
+            <label>
+              Loan 1 interest rate (% p.a.)
+              <input type="number" id="interestRate1Pct" value="3.5" step="0.1" />
+            </label>
+
+            <label>
+              Disagio (%)
+              <input type="number" id="discountRatePct" value="0" step="0.1" />
+            </label>
+
+            <label>
+              Loan 2 term (years, refinancing)
+              <input type="number" id="loanTermYears2" value="10" step="1" />
+            </label>
+
+            <label>
+              Loan 2 interest rate (% p.a.)
+              <input type="number" id="interestRate2Pct" value="4" step="0.1" />
+            </label>
+          </fieldset>
+
+          <!-- Taxes & sale -->
+          <fieldset>
+            <legend>Taxes & Sale</legend>
+
+            <label>
+              Income tax rate (%)
+              <input type="number" id="incomeTaxRatePct" value="30" step="1" />
+            </label>
+
+            <label>
+              Alternative investment return before tax (% p.a.)
+              <input type="number" id="altReturnBeforeTaxPct" value="6" step="0.1" />
+            </label>
+
+            <label>
+              Tax on alternative investment (%)
+              <input type="number" id="altTaxRatePct" value="26" step="1" />
+            </label>
+
+            <label>
+              Selling costs (% of property value)
+              <input type="number" id="sellingCostRatePct" value="3" step="0.1" />
+            </label>
+
+            <label>
+              Investment horizon (years)
+              <input type="number" id="investmentHorizonYears" value="30" step="1" />
+            </label>
+
+            <div class="radio-group">
+              <span>Sale mode:</span>
+              <label class="inline">
+                <input type="radio" name="saleMode" value="hold" checked />
+                Hold (no sale)
+              </label>
+              <label class="inline">
+                <input type="radio" name="saleMode" value="sell" />
+                Sell in year:
+              </label>
+              <input type="number" id="saleYear" value="15" step="1" class="sale-year-input" />
+            </div>
+
+            <label>
+              AfA model
+              <select id="afaModel">
+                <option value="Linear 2%">Linear 2% p.a.</option>
+                <option value="Linear 3%">Linear 3% p.a.</option>
+                <option value="Degressive 5% + Linear 2%">Degressive 5% + Linear 2%</option>
+                <option value="Degressive 5% + Linear 3%">Degressive 5% + Linear 3%</option>
+                <option value="Linear 1/Restnutzungsdauer">Linear 1 / remaining life</option>
+              </select>
+            </label>
+
+            <label>
+              Remaining useful life for AfA (years, only used for "Linear 1 / remaining life")
+              <input type="number" id="buildingLifetimeYears" value="50" step="1" />
+            </label>
+          </fieldset>
+
+          <button type="button" id="runCalcBtn" class="btn-primary">
+            Run calculation
+          </button>
+        </form>
+      </section>
+
+      <!-- RIGHT: RESULTS -->
+      <section class="panel panel-results">
+        <h2>Results (Base Scenario)</h2>
+
+        <div id="resultsKpis" class="results-kpis">
+          <p>No calculation yet.</p>
+        </div>
+
+        <details class="results-raw">
+          <summary>Show raw result object (debug)</summary>
+          <pre id="resultsRaw"></pre>
+        </details>
+      </section>
+    </main>
+  </div>
 
   <!-- Main application script (ES module) -->
   <script type="module" src="main.js"></script>
